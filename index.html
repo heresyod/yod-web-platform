@@ -416,7 +416,7 @@
       function saveToNetlify(email) {
         var body = new URLSearchParams({ 'form-name': 'notify', email: email }).toString();
         return fetch('/', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body })
-          .catch(function () {});
+          .then(function (res) { if (!res.ok) throw new Error('Form submission failed: ' + res.status); });
       }
 
       function sendThanks(email) {
