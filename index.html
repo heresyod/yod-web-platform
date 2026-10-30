@@ -188,6 +188,13 @@
   .notify form:focus-within { border-color: var(--gold-soft); }
   .notify input { flex: 1; min-width: 0; background: transparent; border: 0; color: var(--silver); font: 300 .95rem/1 var(--sans); letter-spacing: .04em; padding: 1.1rem 1.3rem; }
   .notify small { display: block; margin-top: 1rem; font-size: .72rem; letter-spacing: .08em; color: var(--mist); }
+  .notify button { border: 0; cursor: pointer; }
+  .notify button[disabled] { opacity: .55; cursor: wait; }
+  .notify .thanks { display: none; margin-top: 2.2rem; padding: 1.2rem; border: 1px solid var(--gold); color: var(--gold-soft); font-family: var(--serif); font-size: 1.15rem; letter-spacing: .04em; }
+  .notify .err { display: none; margin-top: 1rem; color: #c98b7a; font-size: .85rem; letter-spacing: .04em; }
+  .notify.sent form, .notify.sent small { display: none; }
+  .notify.sent .thanks { display: block; }
+  .notify .err.show { display: block; }
 
   /* ---------- trust ---------- */
   .trust { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 2rem; max-width: 1180px; margin: 0 auto; }
@@ -341,9 +348,16 @@
       <span class="small" style="color:var(--gold-soft)">Early access</span>
       <h2 class="serif" style="font-size:clamp(2rem,4vw,3rem);letter-spacing:.08em;margin-top:.9rem">Be first to wear it</h2>
       <p style="color:var(--silver-dim);margin-top:1rem;line-height:1.8">Leave your email and you'll hear from us once, on launch day, before the drop goes public.</p>
-      <div style="margin-top:2rem">
-        <a class="btn btn-gold" href="mailto:heresyod@gmail.com?subject=Notify%20Me%20%E2%80%93%20YOD%20Launch&body=Hello%20YOD%20Team%2C%0A%0APlease%20notify%20me%20when%20YOD%20launches.%20I%20would%20like%20to%20hear%20from%20you%20on%20launch%20day%2C%20before%20the%20drop%20goes%20public.%0A%0A--%20My%20details%20--%0A%0AFull%20name%3A%20%0AEmail%3A%20%0ACity%2C%20Country%3A%20%0A%0AWear%20Your%20Definition.%0A%0AThank%20you%2C">Notify me</a>
-      </div>
+      <form id="notify-form" autocomplete="on">
+        <input type="hidden" name="access_key" value="REPLACE_WITH_YOUR_WEB3FORMS_ACCESS_KEY">
+        <input type="hidden" name="subject" value="New YOD launch signup – theyod.com">
+        <input type="hidden" name="from_name" value="YOD Coming Soon Page">
+        <input type="checkbox" name="botcheck" style="display:none" tabindex="-1" autocomplete="off">
+        <input type="email" name="email" placeholder="Your email" required aria-label="Email address">
+        <button class="btn btn-gold" type="submit" id="notify-btn">Notify me</button>
+      </form>
+      <div class="thanks">You're on the list. We'll be in touch on launch day.</div>
+      <div class="err" role="alert"></div>
       <small style="display:block;margin-top:1.4rem">One email from us when we launch. Nothing else.</small>
     </div>
   </section>
@@ -424,6 +438,35 @@
       document.body.style.overflow = '';
     }
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeModal(); });
+
+    /* ===== Notify Me — Web3Forms submit =====
+       Setup: go to https://web3forms.com, enter heresyod@gmail.com, copy the
+       Access Key you receive, and replace REPLACE_WITH_YOUR_WEB3FORMS_ACCESS_KEY
+       in the hidden input above. */
+    (function () {
+      var box = document.getElementById('notify');
+      var form = document.getElementById('notify-form');
+      var btn = document.getElementById('notify-btn');
+      var err = box.querySelector('.err');
+      if (!form) return;
+      form.addEventListener('submit', function (ev) {
+        ev.preventDefault();
+        err.classList.remove('show');
+        btn.disabled = true; btn.textContent = 'Sending…';
+        var data = new FormData(form);
+        fetch('https://api.web3forms.com/submit', { method: 'POST', body: data })
+          .then(function (r) { return r.json(); })
+          .then(function (j) {
+            if (j && j.success) { box.classList.add('sent'); }
+            else { throw new Error(j && j.message || 'Submission failed'); }
+          })
+          .catch(function (e) {
+            btn.disabled = false; btn.textContent = 'Notify me';
+            err.textContent = 'Could not send right now. Please try again, or email heresyod@gmail.com.';
+            err.classList.add('show');
+          });
+      });
+    })();
   </script>
 </body>
 </html>
