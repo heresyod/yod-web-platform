@@ -245,6 +245,27 @@
     margin-top: 1.6rem; padding-top: 1.4rem; border-top: 1px solid var(--line);
     font-family: var(--serif); font-style: italic; color: var(--silver); font-size: 1rem; letter-spacing: .05em;
   }
+  .modal-form { display: grid; gap: 0.9rem; margin-top: 1.4rem; }
+  .modal-form .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; }
+  .modal-form label { display: block; font-size: .7rem; letter-spacing: .18em; text-transform: uppercase; color: var(--silver-dim); margin-bottom: .4rem; }
+  .modal-form input, .modal-form select, .modal-form textarea {
+    width: 100%; background: rgba(255,255,255,.02); border: 1px solid var(--line-strong);
+    color: var(--silver); font: 300 .95rem/1.4 var(--sans); letter-spacing: .02em;
+    padding: .85rem 1rem; outline: none; transition: border-color .25s;
+  }
+  .modal-form input:focus, .modal-form select:focus, .modal-form textarea:focus { border-color: var(--gold-soft); }
+  .modal-form textarea { min-height: 80px; resize: vertical; font-family: var(--sans); }
+  .modal-form select { appearance: none; -webkit-appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--silver-dim) 50%), linear-gradient(135deg, var(--silver-dim) 50%, transparent 50%); background-position: calc(100% - 18px) 50%, calc(100% - 12px) 50%; background-size: 6px 6px; background-repeat: no-repeat; padding-right: 36px; }
+  .modal-form option { background: #0a0a0a; color: var(--silver); }
+  .modal-form .actions-row { display: flex; gap: .8rem; margin-top: .6rem; align-items: center; }
+  .modal-form .actions-row button { flex: 1; border: 0; cursor: pointer; }
+  .modal-form .actions-row button[disabled] { opacity: .55; cursor: wait; }
+  .modal-form .form-thanks { display: none; margin-top: 1rem; padding: 1rem 1.2rem; border: 1px solid var(--gold); color: var(--gold-soft); font-family: var(--serif); font-size: 1.05rem; letter-spacing: .04em; }
+  .modal-form .form-err { display: none; margin-top: .8rem; color: #c98b7a; font-size: .85rem; letter-spacing: .04em; }
+  .modal-form.sent fieldset, .modal-form.sent .actions-row { display: none; }
+  .modal-form.sent .form-thanks { display: block; }
+  .modal-form .form-err.show { display: block; }
+  .modal-form fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: 0.9rem; }
 
   /* ---------- footer ---------- */
   footer { position: relative; z-index: 1; padding: clamp(3rem, 6vh, 4.5rem) var(--pad) calc(1.5rem + env(safe-area-inset-bottom, 0px)); }
@@ -331,7 +352,7 @@
       <h1 class="reveal d2">Something is being <em>defined.</em></h1>
       <p class="reveal d3">Premium oversized t‑shirts, heavyweight fabric, and a cut that holds its line. The first YOD drop lands on theyod.com soon. Those who define their own world get in first.</p>
       <div class="actions reveal d4">
-        <a class="btn btn-gold" href="mailto:heresyod@gmail.com?subject=Early%20Access%20Request%20%E2%80%93%20YOD%20First%20Drop&body=Hello%20YOD%20Team%2C%0A%0AI%20would%20like%20to%20request%20early%20access%20to%20the%20first%20YOD%20drop.%20Please%20add%20me%20to%20the%20priority%20list%20and%20notify%20me%20before%20the%20public%20launch.%0A%0A--%20My%20details%20--%0A%0AFull%20name%3A%20%0APhone%20(with%20country%20code)%3A%20%0ACity%2C%20Country%3A%20%0APreferred%20size%20(XS%2FS%2FM%2FL%2FXL%2FXXL)%3A%20%0AHow%20I%20heard%20about%20YOD%3A%20%0A%0AI%20understand%20early%20access%20may%20be%20limited%20and%20look%20forward%20to%20hearing%20from%20you.%0A%0AWear%20Your%20Definition.%0A%0AThank%20you%2C">Get early access</a>
+        <a class="btn btn-gold" href="#" onclick="openModal('early');return false;">Get early access</a>
         <a class="btn btn-line" href="https://www.instagram.com/yod.india/" target="_blank" rel="noopener">Follow the drop</a>
       </div>
       <div class="meta small reveal d4">
@@ -360,9 +381,10 @@
       <form id="notify-form" autocomplete="on">
         <input type="hidden" name="access_key" value="61b277be-7230-4c90-b40a-aba39ebd4634">
         <input type="hidden" name="subject" value="New YOD launch signup – theyod.com">
-        <input type="hidden" name="from_name" value="YOD Coming Soon Page">
+        <input type="hidden" name="from_name" value="YOD · theyod.com">
+        <input type="hidden" name="replyto" id="notify-replyto" value="">
         <input type="checkbox" name="botcheck" style="display:none" tabindex="-1" autocomplete="off">
-        <input type="email" name="email" placeholder="Your email" required aria-label="Email address">
+        <input type="email" name="email" id="notify-email" placeholder="Your email" required aria-label="Email address">
         <button class="btn btn-gold" type="submit" id="notify-btn">Notify me</button>
       </form>
       <div class="thanks">You're on the list. We'll be in touch on launch day.</div>
@@ -426,6 +448,45 @@
     </div>
   </div>
 
+  <div class="modal-backdrop" id="modal-early" role="dialog" aria-modal="true" aria-labelledby="early-title" onclick="if(event.target===this)closeModal()">
+    <div class="modal-panel">
+      <button class="modal-close" aria-label="Close" onclick="closeModal()">×</button>
+      <div class="modal-eyebrow">Early Access</div>
+      <h2 id="early-title">Request your <em>early access</em>.</h2>
+      <p style="color:var(--silver-dim);font-size:.95rem;line-height:1.7;margin-bottom:.5rem">Priority access is limited. Tell us a bit about yourself and we'll be in touch before the public drop.</p>
+      <form class="modal-form" id="early-form" autocomplete="on">
+        <input type="hidden" name="access_key" value="61b277be-7230-4c90-b40a-aba39ebd4634">
+        <input type="hidden" name="subject" value="Early Access Request – YOD First Drop">
+        <input type="hidden" name="from_name" value="YOD · theyod.com">
+        <input type="hidden" name="replyto" id="early-replyto" value="">
+        <input type="checkbox" name="botcheck" style="display:none" tabindex="-1" autocomplete="off">
+        <fieldset>
+          <div class="row2">
+            <div><label for="ea-name">Full name</label><input id="ea-name" type="text" name="name" required autocomplete="name"></div>
+            <div><label for="ea-email">Email</label><input id="ea-email" type="email" name="email" required autocomplete="email"></div>
+          </div>
+          <div class="row2">
+            <div><label for="ea-phone">Phone</label><input id="ea-phone" type="tel" name="phone" placeholder="+91…" autocomplete="tel"></div>
+            <div><label for="ea-city">City, country</label><input id="ea-city" type="text" name="city" required autocomplete="address-level2"></div>
+          </div>
+          <div><label for="ea-size">Preferred size</label>
+            <select id="ea-size" name="preferred_size" required>
+              <option value="" disabled selected>Choose a size</option>
+              <option>XS</option><option>S</option><option>M</option><option>L</option><option>XL</option><option>XXL</option>
+              <option>Not sure yet</option>
+            </select>
+          </div>
+          <div><label for="ea-note">Anything to share? (optional)</label><textarea id="ea-note" name="message" placeholder="How did you hear about YOD? What drew you in?"></textarea></div>
+        </fieldset>
+        <div class="actions-row">
+          <button type="submit" class="btn btn-gold" id="early-btn">Submit request</button>
+        </div>
+        <div class="form-thanks">Request received. We'll be in touch soon. Check your inbox for a confirmation.</div>
+        <div class="form-err" role="alert"></div>
+      </form>
+    </div>
+  </div>
+
   <script>
     /* ===== Modal open/close ===== */
     function openModal(which) {
@@ -440,33 +501,60 @@
     }
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeModal(); });
 
-    /* ===== Notify Me — Web3Forms submit =====
-       Setup: go to https://web3forms.com, enter heresyod@gmail.com, copy the
-       Access Key you receive, and replace REPLACE_WITH_YOUR_WEB3FORMS_ACCESS_KEY
-       in the hidden input above. */
-    (function () {
-      var box = document.getElementById('notify');
-      var form = document.getElementById('notify-form');
-      var btn = document.getElementById('notify-btn');
-      var err = box.querySelector('.err');
-      if (!form) return;
+    /* ===== Web3Forms submissions (Notify Me + Early Access) =====
+       Both forms submit to the same access key. Admin notification goes to
+       heresyod@gmail.com. The subscriber auto-reply is configured once in
+       the Web3Forms dashboard (Autoresponder) — applies to all submissions
+       using this access key. */
+    function submitWeb3Form(opts) {
+      var form = opts.form, btn = opts.btn, err = opts.err,
+          origBtnText = btn.textContent, replytoInput = opts.replyto,
+          emailInput = opts.emailField, onSuccess = opts.onSuccess;
       form.addEventListener('submit', function (ev) {
         ev.preventDefault();
         err.classList.remove('show');
+        // Set reply-to to the submitted email so admin can reply directly
+        if (replytoInput && emailInput) replytoInput.value = emailInput.value.trim();
         btn.disabled = true; btn.textContent = 'Sending…';
         var data = new FormData(form);
         fetch('https://api.web3forms.com/submit', { method: 'POST', body: data })
           .then(function (r) { return r.json(); })
           .then(function (j) {
-            if (j && j.success) { box.classList.add('sent'); }
+            if (j && j.success) { onSuccess(); }
             else { throw new Error(j && j.message || 'Submission failed'); }
           })
           .catch(function (e) {
-            btn.disabled = false; btn.textContent = 'Notify me';
+            btn.disabled = false; btn.textContent = origBtnText;
             err.textContent = 'Could not send right now. Please try again, or email heresyod@gmail.com.';
             err.classList.add('show');
           });
       });
+    }
+
+    (function () {
+      var box = document.getElementById('notify');
+      var form = document.getElementById('notify-form');
+      if (form) {
+        submitWeb3Form({
+          form: form,
+          btn: document.getElementById('notify-btn'),
+          err: box.querySelector('.err'),
+          replyto: document.getElementById('notify-replyto'),
+          emailField: document.getElementById('notify-email'),
+          onSuccess: function () { box.classList.add('sent'); }
+        });
+      }
+      var eForm = document.getElementById('early-form');
+      if (eForm) {
+        submitWeb3Form({
+          form: eForm,
+          btn: document.getElementById('early-btn'),
+          err: eForm.querySelector('.form-err'),
+          replyto: document.getElementById('early-replyto'),
+          emailField: document.getElementById('ea-email'),
+          onSuccess: function () { eForm.classList.add('sent'); }
+        });
+      }
     })();
   </script>
 </body>
