@@ -501,27 +501,50 @@
     }
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeModal(); });
 
-    /* ===== Web3Forms submissions (Notify Me + Early Access) =====
-       Both forms submit to the same access key. Admin notification goes to
-       heresyod@gmail.com. The subscriber auto-reply is configured once in
-       the Web3Forms dashboard (Autoresponder) — applies to all submissions
-       using this access key. */
+    /* ===== Form backends =====
+       Admin notification: Web3Forms → heresyod@gmail.com (both forms, same access key).
+       Subscriber auto-reply: Google Apps Script web app → sends branded HTML
+       auto-reply from your Gmail account. Fire-and-forget after Web3Forms succeeds.
+
+       Setup for auto-reply (one-time):
+       1. Open https://script.google.com → New project
+       2. Paste the server script from APPS_SCRIPT.md (in the repo root)
+       3. Save → Deploy → New deployment → Type: Web app
+          Execute as: Me   |   Who has access: Anyone
+       4. Copy the Web app URL and paste it as APPS_SCRIPT_URL below. */
+    var APPS_SCRIPT_URL = 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE';
+
+    function sendAutoReply(payload) {
+      if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.indexOf('PASTE_') === 0) return;
+      // text/plain content-type avoids CORS preflight; Apps Script reads e.postData.contents
+      fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+      }).catch(function () { /* fire-and-forget */ });
+    }
+
     function submitWeb3Form(opts) {
       var form = opts.form, btn = opts.btn, err = opts.err,
           origBtnText = btn.textContent, replytoInput = opts.replyto,
-          emailInput = opts.emailField, onSuccess = opts.onSuccess;
+          emailInput = opts.emailField, nameInput = opts.nameField,
+          formType = opts.formType, onSuccess = opts.onSuccess;
       form.addEventListener('submit', function (ev) {
         ev.preventDefault();
         err.classList.remove('show');
-        // Set reply-to to the submitted email so admin can reply directly
-        if (replytoInput && emailInput) replytoInput.value = emailInput.value.trim();
+        var emailVal = emailInput ? emailInput.value.trim() : '';
+        var nameVal  = nameInput  ? nameInput.value.trim()  : '';
+        if (replytoInput) replytoInput.value = emailVal;
         btn.disabled = true; btn.textContent = 'Sending…';
         var data = new FormData(form);
         fetch('https://api.web3forms.com/submit', { method: 'POST', body: data })
           .then(function (r) { return r.json(); })
           .then(function (j) {
-            if (j && j.success) { onSuccess(); }
-            else { throw new Error(j && j.message || 'Submission failed'); }
+            if (j && j.success) {
+              sendAutoReply({ email: emailVal, name: nameVal, formType: formType });
+              onSuccess();
+            } else { throw new Error(j && j.message || 'Submission failed'); }
           })
           .catch(function (e) {
             btn.disabled = false; btn.textContent = origBtnText;
@@ -541,6 +564,8 @@
           err: box.querySelector('.err'),
           replyto: document.getElementById('notify-replyto'),
           emailField: document.getElementById('notify-email'),
+          nameField: null,
+          formType: 'notify',
           onSuccess: function () { box.classList.add('sent'); }
         });
       }
@@ -552,6 +577,8 @@
           err: eForm.querySelector('.form-err'),
           replyto: document.getElementById('early-replyto'),
           emailField: document.getElementById('ea-email'),
+          nameField: document.getElementById('ea-name'),
+          formType: 'early',
           onSuccess: function () { eForm.classList.add('sent'); }
         });
       }
