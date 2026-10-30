@@ -118,7 +118,8 @@
       radial-gradient(ellipse 60% 45% at 50% 8%, rgba(255,255,255,.14), transparent 65%),
       radial-gradient(ellipse 70% 60% at 50% 100%, rgba(168,144,103,.10), transparent 70%),
       linear-gradient(#0d0d0d, #050505);
-    min-height: 100vh;
+    min-height: 115vh;
+    padding: clamp(2rem, 6vh, 5rem) 0;
   }
   .hero-visual .frame {
     position: absolute; inset: clamp(1.25rem, 3vw, 2.5rem);
@@ -130,7 +131,7 @@
   .hero-visual .frame::before { top: -1px; left: -1px; border-right: 0; border-bottom: 0; }
   .hero-visual .frame::after { bottom: -1px; right: -1px; border-left: 0; border-top: 0; }
   .hero-visual .emblem {
-    position: absolute; left: 50%; top: 50%; width: min(60%, 620px);
+    position: absolute; left: 50%; top: 50%; width: min(48%, 520px);
     transform: translate(-50%, -50%); opacity: 0;
     animation: emblem-in 2.2s cubic-bezier(.2,.6,.2,1) .3s forwards;
     filter: drop-shadow(0 30px 60px rgba(0,0,0,.8));
@@ -203,6 +204,49 @@
   .trust .t { color: var(--silver); font-size: .72rem; letter-spacing: .2em; text-transform: uppercase; }
   .trust .d { color: var(--mist); margin-top: .35rem; font-size: .85rem; }
 
+  /* ---------- modal ---------- */
+  .modal-backdrop {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(5,5,5,.88); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    display: none; align-items: center; justify-content: center;
+    padding: clamp(1rem, 4vw, 3rem);
+    opacity: 0; transition: opacity .35s ease;
+  }
+  .modal-backdrop.open { display: flex; opacity: 1; }
+  .modal-panel {
+    position: relative; max-width: 760px; width: 100%; max-height: 86vh; overflow-y: auto;
+    background: linear-gradient(180deg, #0d0d0d, #060606);
+    border: 1px solid rgba(203,181,142,.22);
+    padding: clamp(2rem, 5vw, 4rem);
+    transform: translateY(14px); transition: transform .4s ease;
+  }
+  .modal-backdrop.open .modal-panel { transform: translateY(0); }
+  .modal-panel::before, .modal-panel::after {
+    content: ''; position: absolute; width: 16px; height: 16px; border: 1px solid var(--gold-soft);
+  }
+  .modal-panel::before { top: -1px; left: -1px; border-right: 0; border-bottom: 0; }
+  .modal-panel::after { bottom: -1px; right: -1px; border-left: 0; border-top: 0; }
+  .modal-close {
+    position: absolute; top: 1.1rem; right: 1.2rem; background: none; border: 0;
+    color: var(--silver-dim); font-size: 1.6rem; cursor: pointer; line-height: 1;
+    width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+    transition: color .2s;
+  }
+  .modal-close:hover { color: var(--gold-soft); }
+  .modal-eyebrow { font-size: .68rem; letter-spacing: .32em; text-transform: uppercase; color: var(--gold-soft); margin-bottom: 1rem; }
+  .modal-panel h2 {
+    font-family: var(--serif); font-weight: 400; font-size: clamp(2rem, 4.5vw, 3.2rem);
+    letter-spacing: .04em; color: var(--silver); line-height: 1.1; margin-bottom: 1.6rem;
+  }
+  .modal-panel h2 em { font-style: italic; color: var(--gold-soft); }
+  .modal-panel p {
+    color: var(--silver-dim); font-size: 1rem; line-height: 1.85; margin-bottom: 1.2rem;
+  }
+  .modal-panel .sign {
+    margin-top: 1.6rem; padding-top: 1.4rem; border-top: 1px solid var(--line);
+    font-family: var(--serif); font-style: italic; color: var(--silver); font-size: 1rem; letter-spacing: .05em;
+  }
+
   /* ---------- footer ---------- */
   footer { position: relative; z-index: 1; padding: clamp(3rem, 6vh, 4.5rem) var(--pad) calc(1.5rem + env(safe-area-inset-bottom, 0px)); }
   .fgrid { display: grid; grid-template-columns: 1.6fr 1fr 1fr; gap: 2.5rem; max-width: 1180px; margin: 0 auto; }
@@ -273,7 +317,7 @@
   <nav class="nav">
     <a class="brand" href="#" aria-label="YOD home"><svg viewBox="0 0 976 396"><use href="#yod-mark"/></svg></a>
     <ul class="small" aria-label="Site sections, opening at launch">
-      <li>New</li><li>Men</li><li>Women</li><li>Collections</li><li>About</li>
+      <li>New</li><li>Men</li><li>Women</li><li>Collections</li><li><a href="#" onclick="openModal('about');return false;" style="color:inherit">About</a></li>
     </ul>
     <span class="right small"><i></i>Launching soon</span>
   </nav>
@@ -288,7 +332,7 @@
       <h1 class="reveal d2">Something is being <em>defined.</em></h1>
       <p class="reveal d3">Premium oversized t‑shirts, heavyweight fabric, and a cut that holds its line. The first YOD drop lands on theyod.com soon. Those who define their own world get in first.</p>
       <div class="actions reveal d4">
-        <a class="btn btn-gold" href="mailto:heresyod@gmail.com?subject=Early%20access%20request%20%E2%80%93%20YOD&body=Hi%20YOD%2C%0A%0AI%27d%20like%20early%20access%20to%20the%20first%20drop.%0A%0AName%3A%20%0ACity%3A%20%0A%0AThank%20you.">Get early access</a>
+        <a class="btn btn-gold" href="mailto:heresyod@gmail.com?subject=Early%20Access%20Request%20%E2%80%93%20YOD%20First%20Drop&body=Hello%20YOD%20Team%2C%0A%0AI%20would%20like%20to%20request%20early%20access%20to%20the%20first%20YOD%20drop.%20Please%20add%20me%20to%20the%20priority%20list%20and%20notify%20me%20before%20the%20public%20launch.%0A%0A--%20My%20details%20--%0A%0AFull%20name%3A%20%0APhone%20(with%20country%20code)%3A%20%0ACity%2C%20Country%3A%20%0APreferred%20size%20(XS%2FS%2FM%2FL%2FXL%2FXXL)%3A%20%0AHow%20I%20heard%20about%20YOD%3A%20%0A%0AI%20understand%20early%20access%20may%20be%20limited%20and%20look%20forward%20to%20hearing%20from%20you.%0A%0AWear%20Your%20Definition.%0A%0AThank%20you%2C">Get early access</a>
         <a class="btn btn-line" href="https://www.instagram.com/yod.india/" target="_blank" rel="noopener">Follow the drop</a>
       </div>
       <div class="meta small reveal d4">
@@ -345,7 +389,7 @@
         <div class="brand"><svg viewBox="0 0 976 396" role="img" aria-label="YOD"><use href="#yod-mark"/></svg></div>
         <p class="about">Luxury‑inspired streetwear brand built for the bold, the creators, and the visionaries.</p>
       </div>
-      <div><h4>Company</h4><ul><li>About YOD</li><li>Our story</li></ul></div>
+      <div><h4>Company</h4><ul><li><a href="#" onclick="openModal('about');return false;">About YOD</a></li><li><a href="#" onclick="openModal('story');return false;">Our story</a></li></ul></div>
       <div><h4>Follow us</h4><ul><li><a href="https://www.instagram.com/yod.india/" target="_blank" rel="noopener">Instagram</a></li></ul></div>
     </div>
     <div class="fbar">
@@ -354,7 +398,47 @@
     </div>
   </footer>
 
+  <!-- ============ MODALS ============ -->
+  <div class="modal-backdrop" id="modal-about" role="dialog" aria-modal="true" aria-labelledby="about-title" onclick="if(event.target===this)closeModal()">
+    <div class="modal-panel">
+      <button class="modal-close" aria-label="Close" onclick="closeModal()">×</button>
+      <div class="modal-eyebrow">About</div>
+      <h2 id="about-title">A house built for those who <em>define</em> their own.</h2>
+      <p>YOD is a premium streetwear house born in Bangalore, India, and crafted for the ones who refuse to borrow their identity. We believe clothing is not costume — it is declaration. Every piece we make exists to carry someone's definition of themselves out into the world.</p>
+      <p>Our silhouettes are shaped by construction, not graphics. Heavyweight fabrics. Cuts that hold their line through the day, through the season, through the years. We draft each garment as architecture — mock-necks, drop shoulders, considered proportions — so the piece speaks before any logo does.</p>
+      <p>YOD stands for <em>Your Own Design</em>. The brand, the garments, and the people who wear them are all here for the same reason: to wear a definition they chose, not one they were handed.</p>
+      <div class="sign">— Made in India. Worn by intention.</div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="modal-story" role="dialog" aria-modal="true" aria-labelledby="story-title" onclick="if(event.target===this)closeModal()">
+    <div class="modal-panel">
+      <button class="modal-close" aria-label="Close" onclick="closeModal()">×</button>
+      <div class="modal-eyebrow">Our Story</div>
+      <h2 id="story-title">The ones who <em>define</em>, not the ones who follow.</h2>
+      <p>YOD began with a quiet frustration. Walk any street in India and the shirts tell the same story — borrowed logos, chased trends, the loud sameness of what everyone else was wearing that month. Somewhere in that noise, individuality had gone missing.</p>
+      <p>We built YOD for the ones who were already going the other way. The quiet rebels. The ones who had stopped asking what was in and started asking what was theirs. The vulture in our mark says it best — patient, unflinching, decisive. It does not follow the flock; it waits, it watches, and then it moves.</p>
+      <p>Every YOD piece carries that posture. Heavyweight cotton that remembers its shape. Construction you can feel before you can see it. A design language stripped of noise so what remains is you, the person wearing it, and the definition you chose for yourself.</p>
+      <p>This is not a label you put on. It is a line you draw.</p>
+      <div class="sign">Wear Your Definition.</div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4.4.1/dist/email.min.js"></script>
+  <script>
+    /* ===== Modal open/close ===== */
+    function openModal(which) {
+      var el = document.getElementById('modal-' + which);
+      if (!el) return;
+      el.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeModal() {
+      document.querySelectorAll('.modal-backdrop.open').forEach(function (el) { el.classList.remove('open'); });
+      document.body.style.overflow = '';
+    }
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeModal(); });
+  </script>
   <script>
     /* ===== EMAIL SETUP (fill these in from your EmailJS dashboard) =====
        1. Create a free account at emailjs.com and connect heresyod@gmail.com as a service.
