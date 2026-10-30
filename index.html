@@ -353,7 +353,7 @@
       <p class="reveal d3">Premium oversized t‑shirts, heavyweight fabric, and a cut that holds its line. The first YOD drop lands on theyod.com soon. Those who define their own world get in first.</p>
       <div class="actions reveal d4">
         <a class="btn btn-gold" href="#" onclick="openModal('early');return false;">Get early access</a>
-        <a class="btn btn-line" href="https://www.instagram.com/yod.india/" target="_blank" rel="noopener">Follow the drop</a>
+        <a class="btn btn-line" href="https://www.instagram.com/yod.definition/" target="_blank" rel="noopener">Follow the drop</a>
       </div>
       <div class="meta small reveal d4">
         <div><b>01</b>First drop</div>
@@ -384,7 +384,7 @@
         <input type="hidden" name="from_name" value="YOD · theyod.com">
         <input type="hidden" name="replyto" id="notify-replyto" value="">
         <input type="checkbox" name="botcheck" style="display:none" tabindex="-1" autocomplete="off">
-        <input type="email" name="email" id="notify-email" placeholder="Your email" required aria-label="Email address">
+        <input type="email" name="email" id="notify-email" placeholder="Your email" required maxlength="120" autocomplete="email" aria-label="Email address">
         <button class="btn btn-gold" type="submit" id="notify-btn">Notify me</button>
       </form>
       <div class="thanks">You're on the list. We'll be in touch on launch day.</div>
@@ -414,7 +414,7 @@
         <p class="about">Luxury‑inspired streetwear brand built for the bold, the creators, and the visionaries.</p>
       </div>
       <div><h4>Company</h4><ul><li><a href="#" onclick="openModal('about');return false;">About YOD</a></li><li><a href="#" onclick="openModal('story');return false;">Our story</a></li></ul></div>
-      <div><h4>Follow us</h4><ul><li><a href="https://www.instagram.com/yod.india/" target="_blank" rel="noopener">Instagram</a></li></ul></div>
+      <div><h4>Follow us</h4><ul><li><a href="https://www.instagram.com/yod.definition/" target="_blank" rel="noopener">Instagram</a></li></ul></div>
     </div>
     <div class="fbar">
       <span>© 2026 YOD · theyod.com</span>
@@ -462,12 +462,12 @@
         <input type="checkbox" name="botcheck" style="display:none" tabindex="-1" autocomplete="off">
         <fieldset>
           <div class="row2">
-            <div><label for="ea-name">Full name</label><input id="ea-name" type="text" name="name" required autocomplete="name"></div>
-            <div><label for="ea-email">Email</label><input id="ea-email" type="email" name="email" required autocomplete="email"></div>
+            <div><label for="ea-name">Full name</label><input id="ea-name" type="text" name="name" required minlength="2" maxlength="60" pattern="[A-Za-z][A-Za-z\s.'\-]{1,59}" autocomplete="name" title="Letters, spaces, apostrophes and hyphens only"></div>
+            <div><label for="ea-email">Email</label><input id="ea-email" type="email" name="email" required maxlength="120" autocomplete="email"></div>
           </div>
           <div class="row2">
-            <div><label for="ea-phone">Phone</label><input id="ea-phone" type="tel" name="phone" placeholder="+91…" autocomplete="tel"></div>
-            <div><label for="ea-city">City, country</label><input id="ea-city" type="text" name="city" required autocomplete="address-level2"></div>
+            <div><label for="ea-phone">Phone</label><input id="ea-phone" type="tel" name="phone" placeholder="+91…" maxlength="20" pattern="\+?[0-9][0-9\s\-]{6,16}[0-9]" autocomplete="tel" title="Digits only, 7–18 characters, optional +"></div>
+            <div><label for="ea-city">City, country</label><input id="ea-city" type="text" name="city" required minlength="2" maxlength="80" autocomplete="address-level2"></div>
           </div>
           <div><label for="ea-size">Preferred size</label>
             <select id="ea-size" name="preferred_size" required>
@@ -476,7 +476,7 @@
               <option>Not sure yet</option>
             </select>
           </div>
-          <div><label for="ea-note">Anything to share? (optional)</label><textarea id="ea-note" name="message" placeholder="How did you hear about YOD? What drew you in?"></textarea></div>
+          <div><label for="ea-note">Anything to share? (optional)</label><textarea id="ea-note" name="message" maxlength="500" placeholder="How did you hear about YOD? What drew you in?"></textarea></div>
         </fieldset>
         <div class="actions-row">
           <button type="submit" class="btn btn-gold" id="early-btn">Submit request</button>
@@ -525,17 +525,72 @@
       }).catch(function () { /* fire-and-forget */ });
     }
 
+    /* ===== Input validation ===== */
+    var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    var PHONE_RE = /^\+?[0-9][0-9\s\-]{6,16}[0-9]$/;
+    var NAME_RE  = /^[A-Za-z][A-Za-z\s.'-]{1,59}$/;
+
+    // Common throwaway / role-based mailboxes we won't accept
+    var BLOCKED_EMAIL_DOMAINS = ['mailinator.com','tempmail.com','10minutemail.com','guerrillamail.com','trash-mail.com','yopmail.com','sharklasers.com'];
+
+    function validateEmail(v) {
+      v = (v || '').trim();
+      if (!v) return 'Please enter your email.';
+      if (v.length > 120) return 'Email is too long.';
+      if (!EMAIL_RE.test(v)) return 'Please enter a valid email address.';
+      var domain = v.split('@')[1].toLowerCase();
+      if (BLOCKED_EMAIL_DOMAINS.indexOf(domain) !== -1) return 'Please use a permanent email address.';
+      return null;
+    }
+    function validateName(v, required) {
+      v = (v || '').trim();
+      if (!v) return required ? 'Please enter your name.' : null;
+      if (!NAME_RE.test(v)) return 'Name can only contain letters, spaces, apostrophes and hyphens.';
+      return null;
+    }
+    function validatePhone(v, required) {
+      v = (v || '').trim();
+      if (!v) return required ? 'Please enter your phone.' : null;
+      if (!PHONE_RE.test(v)) return 'Please enter a valid phone number (digits only, 7–18 chars).';
+      return null;
+    }
+    function validateCity(v, required) {
+      v = (v || '').trim();
+      if (!v) return required ? 'Please enter your city and country.' : null;
+      if (v.length < 2 || v.length > 80) return 'City & country should be 2–80 characters.';
+      return null;
+    }
+    function validateMessage(v) {
+      v = (v || '').trim();
+      if (v.length > 500) return 'Message is too long (max 500 characters).';
+      return null;
+    }
+
     function submitWeb3Form(opts) {
       var form = opts.form, btn = opts.btn, err = opts.err,
           origBtnText = btn.textContent, replytoInput = opts.replyto,
           emailInput = opts.emailField, nameInput = opts.nameField,
-          formType = opts.formType, onSuccess = opts.onSuccess;
+          formType = opts.formType, onSuccess = opts.onSuccess,
+          validate = opts.validate;
+
+      function showErr(msg) { err.textContent = msg; err.classList.add('show'); }
+
       form.addEventListener('submit', function (ev) {
         ev.preventDefault();
         err.classList.remove('show');
+
+        // Honeypot — silently reject bots
+        var honey = form.querySelector('input[name="botcheck"]');
+        if (honey && honey.checked) { return; }
+
+        // Field validation
+        var problem = validate ? validate(form) : null;
+        if (problem) { showErr(problem); return; }
+
         var emailVal = emailInput ? emailInput.value.trim() : '';
         var nameVal  = nameInput  ? nameInput.value.trim()  : '';
         if (replytoInput) replytoInput.value = emailVal;
+
         btn.disabled = true; btn.textContent = 'Sending…';
         var data = new FormData(form);
         fetch('https://api.web3forms.com/submit', { method: 'POST', body: data })
@@ -548,8 +603,7 @@
           })
           .catch(function (e) {
             btn.disabled = false; btn.textContent = origBtnText;
-            err.textContent = 'Could not send right now. Please try again, or email heresyod@gmail.com.';
-            err.classList.add('show');
+            showErr('Could not send right now. Please try again, or email heresyod@gmail.com.');
           });
       });
     }
@@ -566,6 +620,9 @@
           emailField: document.getElementById('notify-email'),
           nameField: null,
           formType: 'notify',
+          validate: function (f) {
+            return validateEmail(f.email.value);
+          },
           onSuccess: function () { box.classList.add('sent'); }
         });
       }
@@ -579,6 +636,14 @@
           emailField: document.getElementById('ea-email'),
           nameField: document.getElementById('ea-name'),
           formType: 'early',
+          validate: function (f) {
+            return validateName(f.name.value, true)
+                || validateEmail(f.email.value)
+                || validatePhone(f.phone.value, false)
+                || validateCity(f.city.value, true)
+                || (!f.preferred_size.value ? 'Please choose a preferred size.' : null)
+                || validateMessage(f.message.value);
+          },
           onSuccess: function () { eForm.classList.add('sent'); }
         });
       }

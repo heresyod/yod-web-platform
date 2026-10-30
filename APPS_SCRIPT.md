@@ -44,13 +44,17 @@ If the auto-reply doesn't arrive, open the Apps Script project, click **Executio
 function doPost(e) {
   try {
     var data = JSON.parse(e.postData.contents);
-    var toEmail = (data.email || '').trim();
-    var toName  = (data.name  || '').trim();
-    var kind    = (data.formType || 'notify').toLowerCase();
+    var toEmail = String(data.email || '').trim().toLowerCase();
+    var toName  = String(data.name  || '').trim().slice(0, 60);
+    var kind    = String(data.formType || 'notify').toLowerCase();
 
-    if (!toEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(toEmail)) {
-      return json({ success: false, error: 'Invalid email' });
-    }
+    // Validation
+    if (!toEmail || toEmail.length > 120) return json({ success: false, error: 'Invalid email length' });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(toEmail)) return json({ success: false, error: 'Invalid email format' });
+    var blocked = ['mailinator.com','tempmail.com','10minutemail.com','guerrillamail.com','trash-mail.com','yopmail.com','sharklasers.com'];
+    var domain = toEmail.split('@')[1];
+    if (blocked.indexOf(domain) !== -1) return json({ success: false, error: 'Blocked email domain' });
+    if (toName && !/^[A-Za-z][A-Za-z\s.'\-]{1,59}$/.test(toName)) toName = ''; // clean bad names
 
     var subject = (kind === 'early')
       ? 'YOD — your early access request is in'
@@ -101,7 +105,7 @@ function buildEmail(kind, name) {
         '<p style="margin:0 0 14px">' + greeting + '</p>',
         '<p style="margin:0 0 14px">' + intro + '</p>',
         '<p style="margin:0 0 14px">' + para + '</p>',
-        '<p style="margin:0 0 14px">Follow the journey:<br><a href="https://www.instagram.com/yod.india/" style="color:#c4a57b">@yod.india on Instagram</a></p>',
+        '<p style="margin:0 0 14px">Follow the journey:<br><a href="https://www.instagram.com/yod.definition/" style="color:#c4a57b">@yod.definition on Instagram</a></p>',
         '<p style="margin:24px 0 0;font-style:italic;color:#c4a57b;text-align:center;letter-spacing:4px;text-transform:uppercase;font-size:11px">— Wear Your Definition —</p>',
         '<p style="margin:28px 0 0;font-size:11px;color:#777;text-align:center;letter-spacing:1px">Team YOD · <a href="https://www.theyod.com" style="color:#8a7355">theyod.com</a></p>',
       '</div>',
