@@ -298,10 +298,6 @@
     0%,100% { transform: translate(-50%, -50%) scale(1); opacity: .5; }
     50%     { transform: translate(-50%, -50%) scale(1.08); opacity: .9; }
   }
-  @keyframes ray-sweep {
-    from { transform: translate(-50%, -50%) rotate(0deg); }
-    to   { transform: translate(-50%, -50%) rotate(360deg); }
-  }
   @keyframes num-rise {
     from { opacity: 0; transform: translateY(16px); }
     to { opacity: 1; transform: translateY(0); }
@@ -322,31 +318,6 @@
     filter: blur(14px);
     pointer-events: none;
     animation: aura-breathe 7s ease-in-out infinite;
-  }
-
-  /* Sun-ray sweep behind the vulture — conic gradient of thin gold rays */
-  .hero-visual::after {
-    content: ''; position: absolute; left: 50%; top: 50%;
-    width: min(80%, 820px); aspect-ratio: 1; border-radius: 50%;
-    transform: translate(-50%, -50%);
-    background: conic-gradient(from 0deg,
-      transparent 0deg, rgba(203,181,142,.07) 2deg, transparent 4deg,
-      transparent 28deg, rgba(203,181,142,.09) 30deg, transparent 32deg,
-      transparent 58deg, rgba(203,181,142,.06) 60deg, transparent 62deg,
-      transparent 88deg, rgba(203,181,142,.09) 90deg, transparent 92deg,
-      transparent 118deg, rgba(203,181,142,.07) 120deg, transparent 122deg,
-      transparent 148deg, rgba(203,181,142,.09) 150deg, transparent 152deg,
-      transparent 178deg, rgba(203,181,142,.06) 180deg, transparent 182deg,
-      transparent 208deg, rgba(203,181,142,.09) 210deg, transparent 212deg,
-      transparent 238deg, rgba(203,181,142,.07) 240deg, transparent 242deg,
-      transparent 268deg, rgba(203,181,142,.09) 270deg, transparent 272deg,
-      transparent 298deg, rgba(203,181,142,.06) 300deg, transparent 302deg,
-      transparent 328deg, rgba(203,181,142,.09) 330deg, transparent 332deg
-    );
-    -webkit-mask-image: radial-gradient(circle, transparent 25%, #000 32%, #000 60%, transparent 75%);
-            mask-image: radial-gradient(circle, transparent 25%, #000 32%, #000 60%, transparent 75%);
-    pointer-events: none;
-    animation: ray-sweep 220s linear infinite;
   }
 
   /* Vulture image itself — breathing gold halo */
