@@ -26,7 +26,7 @@ What this does for you:
 2. Click **New project**
 3. Delete the default `function myFunction()` code
 4. Paste the entire script from `apps-script.gs` below
-5. At the top of the script, replace `PASTE_SHEET_ID_HERE` with the Sheet ID from step 1
+5. At the top of the script, replace `1PkyvxIDXrmR4k5ui_mZxuJrSxu6QiWNyVVKmMn614d8` with the Sheet ID from step 1
 6. Click **Save** (💾), name the project `YOD Auto-Reply`
 
 ## 3. Deploy as a Web app
@@ -65,7 +65,7 @@ Open Apps Script → **Executions** on the left to see run logs if something loo
 //  4. Sends a branded HTML auto-reply from your Gmail
 // ============================================================
 
-var SHEET_ID = 'PASTE_SHEET_ID_HERE';    // ← set this once
+var SHEET_ID = '1PkyvxIDXrmR4k5ui_mZxuJrSxu6QiWNyVVKmMn614d8';    // ← set this once
 var SHEET_NAME = 'Sheet1';               // tab name — leave as default
 var OWNER_EMAIL = 'heresyod@gmail.com';
 
