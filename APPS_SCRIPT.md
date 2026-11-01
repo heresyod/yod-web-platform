@@ -1,45 +1,73 @@
-# YOD auto-reply — Google Apps Script setup
+# YOD auto-reply + subscriber log — Google Apps Script setup
 
-One-time setup. Takes ~3 minutes.
+One-time setup. Takes ~5 minutes.
 
-## 1. Create the script
+What this does for you:
+- Sends a branded HTML auto-reply to every new subscriber from your Gmail
+- Logs every subscriber (email, name, source form, timestamp, IP country if available) to a Google Sheet in your Drive
+- Skips the auto-reply if the email already exists in the sheet (server-side dedupe)
+- Keeps a growing list you can use at launch day for your real announcement blast
+
+## 1. Create the Google Sheet (first)
+1. Open https://sheets.google.com → **Blank spreadsheet**
+2. Rename it to `YOD subscribers`
+3. In row 1, put these column headers in order:
+   - A1: `Timestamp`
+   - B1: `Email`
+   - C1: `Name`
+   - D1: `Source`
+   - E1: `User Agent`
+4. Copy the Sheet's URL — you need the ID from it. The URL looks like
+   `https://docs.google.com/spreadsheets/d/`**`1AbCdeFGhiJKLmnOpqrsTUvwxYZ`**`/edit`
+   The bold part is the Sheet ID. Save it.
+
+## 2. Create the script
 1. Open **https://script.google.com** (signed in as `heresyod@gmail.com`)
 2. Click **New project**
 3. Delete the default `function myFunction()` code
-4. Paste the entire script from `apps-script.gs` (below)
-5. Click **Save** (💾), name the project `YOD Auto-Reply`
+4. Paste the entire script from `apps-script.gs` below
+5. At the top of the script, replace `PASTE_SHEET_ID_HERE` with the Sheet ID from step 1
+6. Click **Save** (💾), name the project `YOD Auto-Reply`
 
-## 2. Deploy as a Web app
-1. Top-right, click **Deploy** → **New deployment**
-2. Click the ⚙️ gear next to "Select type" → choose **Web app**
-3. Settings:
-   - **Description:** `YOD auto-reply v1`
+## 3. Deploy as a Web app
+1. Top-right, click **Deploy** → **Manage deployments** (if you already have one) OR **New deployment**
+2. If editing an existing deployment: pencil (✏️) → **Version: New version** → **Deploy**
+3. If new: Click the ⚙️ gear next to "Select type" → **Web app**
+   - **Description:** `YOD auto-reply v2`
    - **Execute as:** `Me (heresyod@gmail.com)`
    - **Who has access:** **Anyone**
-4. Click **Deploy**
-5. Google will ask for permissions — click **Authorize access**, pick your account, click **Advanced** → **Go to YOD Auto-Reply (unsafe)** → **Allow**
-6. **Copy the Web app URL** — it looks like `https://script.google.com/macros/s/AKfy.../exec`
+   - Click **Deploy**
+4. Google will ask for extra permissions this time (because the script now writes to Sheets) — click **Authorize access**, pick your account, click **Advanced** → **Go to YOD Auto-Reply (unsafe)** → **Allow**
+5. **Copy the Web app URL** (unchanged if you edited; new if first-time)
 
-## 3. Paste the URL in index.html
-1. Open `index.html`
-2. Find `APPS_SCRIPT_URL = 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE'`
-3. Replace the placeholder with the Web app URL you copied
-4. Commit and push
+## 4. Paste the URL in index.html (only if the URL is new)
+Edit `index.html` → replace the string value of `APPS_SCRIPT_URL`.
 
-## 4. Test
-Fill out either form on https://www.theyod.com with a test email you can check.
-- Admin notification → arrives at heresyod@gmail.com (Web3Forms)
-- Auto-reply → arrives at the test email (from your Gmail via Apps Script)
+## 5. Test
+Submit a test email on https://www.theyod.com.
+- Admin notification → heresyod@gmail.com (via Web3Forms)
+- Auto-reply → test inbox (from your Gmail via Apps Script)
+- Sheet gets a new row with that submission
+- Submit the same email again → no second auto-reply, no duplicate row
 
-If the auto-reply doesn't arrive, open the Apps Script project, click **Executions** on the left — any errors will show there.
+Open Apps Script → **Executions** on the left to see run logs if something looks off.
 
 ---
 
-## apps-script.gs — paste this entire file into the Apps Script editor
+## apps-script.gs — paste this entire file
 
 ```js
-// YOD auto-reply — handles POST from theyod.com forms
-// Sends a branded HTML confirmation to the subscriber from your Gmail.
+// ============================================================
+// YOD backend — handles form POST from theyod.com
+//  1. Validates email
+//  2. Deduplicates against the YOD subscribers Sheet
+//  3. Writes the subscription to the sheet
+//  4. Sends a branded HTML auto-reply from your Gmail
+// ============================================================
+
+var SHEET_ID = 'PASTE_SHEET_ID_HERE';    // ← set this once
+var SHEET_NAME = 'Sheet1';               // tab name — leave as default
+var OWNER_EMAIL = 'heresyod@gmail.com';
 
 function doPost(e) {
   try {
@@ -48,14 +76,36 @@ function doPost(e) {
     var toName  = String(data.name  || '').trim().slice(0, 60);
     var kind    = String(data.formType || 'notify').toLowerCase();
 
-    // Validation
-    if (!toEmail || toEmail.length > 120) return json({ success: false, error: 'Invalid email length' });
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(toEmail)) return json({ success: false, error: 'Invalid email format' });
+    // ---- Validate ----
+    if (!toEmail || toEmail.length > 120) return json({ success:false, error:'Invalid email length' });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(toEmail)) return json({ success:false, error:'Invalid email format' });
     var blocked = ['mailinator.com','tempmail.com','10minutemail.com','guerrillamail.com','trash-mail.com','yopmail.com','sharklasers.com'];
-    var domain = toEmail.split('@')[1];
-    if (blocked.indexOf(domain) !== -1) return json({ success: false, error: 'Blocked email domain' });
-    if (toName && !/^[A-Za-z][A-Za-z\s.'\-]{1,59}$/.test(toName)) toName = ''; // clean bad names
+    if (blocked.indexOf(toEmail.split('@')[1]) !== -1) return json({ success:false, error:'Blocked email domain' });
+    if (toName && !/^[A-Za-z][A-Za-z\s.'\-]{1,59}$/.test(toName)) toName = '';
 
+    // ---- Dedupe against sheet ----
+    var sheet = SpreadsheetApp.openById(SHEET_ID).getSheetByName(SHEET_NAME)
+                || SpreadsheetApp.openById(SHEET_ID).getSheets()[0];
+    var existing = sheet.getRange(2, 2, Math.max(sheet.getLastRow() - 1, 1), 1).getValues(); // column B
+    var already = false;
+    for (var i = 0; i < existing.length; i++) {
+      if (String(existing[i][0]).trim().toLowerCase() === toEmail) { already = true; break; }
+    }
+
+    if (already) {
+      return json({ success:true, alreadySubscribed:true });
+    }
+
+    // ---- Log to sheet ----
+    sheet.appendRow([
+      new Date(),
+      toEmail,
+      toName,
+      kind,
+      ''  // reserved for user-agent if you want to pass it from the client later
+    ]);
+
+    // ---- Send auto-reply ----
     var subject = (kind === 'early')
       ? 'YOD — your early access request is in'
       : 'YOD — you\'re on the list';
@@ -64,22 +114,21 @@ function doPost(e) {
     GmailApp.sendEmail(toEmail, subject, stripHtml(html), {
       htmlBody: html,
       name: 'YOD',
-      replyTo: 'heresyod@gmail.com'
+      replyTo: OWNER_EMAIL
     });
 
-    return json({ success: true });
+    return json({ success:true, alreadySubscribed:false });
   } catch (err) {
-    return json({ success: false, error: String(err) });
+    return json({ success:false, error:String(err) });
   }
 }
 
 function doGet() {
-  return ContentService.createTextOutput('YOD auto-reply endpoint is live.');
+  return ContentService.createTextOutput('YOD backend is live.');
 }
 
 function json(obj) {
-  return ContentService
-    .createTextOutput(JSON.stringify(obj))
+  return ContentService.createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
 }
 
@@ -88,7 +137,6 @@ function stripHtml(h) { return h.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').t
 function buildEmail(kind, name) {
   var greeting = name ? ('Hi ' + name + ',') : 'Hi,';
   var intro, para;
-
   if (kind === 'early') {
     intro = 'Your early access request has been received. Thank you for choosing to define your own world with YOD.';
     para  = 'Priority access to our debut collection is limited. We will be in touch personally before the first drop goes public, with early access to our premium oversized tees.';
@@ -96,7 +144,6 @@ function buildEmail(kind, name) {
     intro = 'Thank you for signing up. You are now on our priority list.';
     para  = 'We will be in touch personally before the first drop goes public — with early access to our debut collection of premium oversized tees, built for those who define their own world.';
   }
-
   return [
     '<div style="background:#000;padding:40px 20px;font-family:Georgia,serif">',
       '<div style="max-width:560px;margin:0 auto;background:#0a0a0a;border:1px solid #222;padding:36px 32px;color:#d2d2d2;line-height:1.75;font-size:15px">',

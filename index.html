@@ -903,11 +903,35 @@
       return null;
     }
 
+    /* ===== Duplicate-subscriber tracking (browser-side) =====
+       The server (Apps Script + Google Sheet) is the source of truth, but a
+       localStorage set gives us an instant "you're already on the list"
+       message for repeat visits on the same browser without a network call. */
+    var SUBSCRIBED_KEY = 'yod_subscribed_emails_v1';
+    function getSubscribedSet() {
+      try {
+        var raw = localStorage.getItem(SUBSCRIBED_KEY);
+        return raw ? JSON.parse(raw) : {};
+      } catch (e) { return {}; }
+    }
+    function markSubscribed(email) {
+      try {
+        var set = getSubscribedSet();
+        set[email.toLowerCase()] = Date.now();
+        localStorage.setItem(SUBSCRIBED_KEY, JSON.stringify(set));
+      } catch (e) { /* storage disabled, fine */ }
+    }
+    function isAlreadySubscribed(email) {
+      var set = getSubscribedSet();
+      return !!set[(email || '').toLowerCase()];
+    }
+
     function submitWeb3Form(opts) {
       var form = opts.form, btn = opts.btn, err = opts.err,
           origBtnText = btn.textContent, replytoInput = opts.replyto,
           emailInput = opts.emailField, nameInput = opts.nameField,
           formType = opts.formType, onSuccess = opts.onSuccess,
+          onAlreadySubscribed = opts.onAlreadySubscribed,
           validate = opts.validate;
 
       function showErr(msg) { err.textContent = msg; err.classList.add('show'); }
@@ -926,8 +950,15 @@
 
         var emailVal = emailInput ? emailInput.value.trim() : '';
         var nameVal  = nameInput  ? nameInput.value.trim()  : '';
-        if (replytoInput) replytoInput.value = emailVal;
 
+        // Duplicate check (same browser) — short-circuit before submit
+        if (isAlreadySubscribed(emailVal)) {
+          if (onAlreadySubscribed) { onAlreadySubscribed(); }
+          else { showErr('You are already on the list. We will reach out on launch day.'); }
+          return;
+        }
+
+        if (replytoInput) replytoInput.value = emailVal;
         btn.disabled = true; btn.textContent = 'Sending…';
         var data = new FormData(form);
         fetch('https://api.web3forms.com/submit', { method: 'POST', body: data })
@@ -935,6 +966,7 @@
           .then(function (j) {
             if (j && j.success) {
               sendAutoReply({ email: emailVal, name: nameVal, formType: formType });
+              markSubscribed(emailVal);
               onSuccess();
             } else { throw new Error(j && j.message || 'Submission failed'); }
           })
@@ -960,7 +992,16 @@
           validate: function (f) {
             return validateEmail(f.email.value);
           },
-          onSuccess: function () { box.classList.add('sent'); }
+          onSuccess: function () {
+            var t = box.querySelector('.thanks');
+            if (t) t.textContent = "You're on the list. We'll be in touch on launch day.";
+            box.classList.add('sent');
+          },
+          onAlreadySubscribed: function () {
+            var t = box.querySelector('.thanks');
+            if (t) t.textContent = "You are already on the list. We'll reach out on launch day.";
+            box.classList.add('sent');
+          }
         });
       }
       var eForm = document.getElementById('early-form');
@@ -981,7 +1022,16 @@
                 || (!f.preferred_size.value ? 'Please choose a preferred size.' : null)
                 || validateMessage(f.message.value);
           },
-          onSuccess: function () { eForm.classList.add('sent'); }
+          onSuccess: function () {
+            var t = eForm.querySelector('.form-thanks');
+            if (t) t.textContent = "Request received. We'll be in touch soon. Check your inbox for a confirmation.";
+            eForm.classList.add('sent');
+          },
+          onAlreadySubscribed: function () {
+            var t = eForm.querySelector('.form-thanks');
+            if (t) t.textContent = "You have already requested early access. We'll reach out before the public drop.";
+            eForm.classList.add('sent');
+          }
         });
       }
     })();
