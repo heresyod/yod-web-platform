@@ -371,6 +371,7 @@
   .sc { opacity: 0; transform: translateY(32px); filter: blur(6px); transition: opacity 1.1s cubic-bezier(.2,.7,.2,1), transform 1.1s cubic-bezier(.2,.7,.2,1), filter .9s ease-out; }
   .sc.in { opacity: 1; transform: none; filter: blur(0); }
   .sc.d1 { transition-delay: .08s; } .sc.d2 { transition-delay: .18s; } .sc.d3 { transition-delay: .28s; } .sc.d4 { transition-delay: .4s; }
+  .sc-word { display: inline-block; white-space: nowrap; }
   .sc-letter { display: inline-block; opacity: 0; transform: translateY(.5em) rotateX(40deg); transform-origin: 50% 100%; transition: opacity .9s cubic-bezier(.2,.7,.2,1), transform .9s cubic-bezier(.2,.7,.2,1); }
   .sc-letter.in { opacity: 1; transform: none; }
 
@@ -747,27 +748,43 @@
         els.forEach(function (el) { el.classList.add('in'); });
       }
 
-      // Split headlines into per-letter spans (for data-split h2 only)
+      // Split headlines into per-letter spans, grouped by word so words
+      // never break across lines on narrow viewports.
       document.querySelectorAll('[data-split]').forEach(function (h) {
         var text = h.innerHTML;
-        // keep <em>…</em> intact; split only around it
         var parts = text.split(/(<em>.*?<\/em>)/);
         var out = '';
-        var idx = 0;
+        var idx = { n: 0 };
+        function emitWord(word, inEm) {
+          // Each letter wrapped; the whole word wrapped in nowrap so it stays whole
+          var w = '<span class="sc-word">';
+          for (var i = 0; i < word.length; i++) {
+            w += '<span class="sc-letter" style="transition-delay:' + (idx.n * 22) + 'ms">' + word.charAt(i) + '</span>';
+            idx.n++;
+          }
+          w += '</span>';
+          return inEm ? ('<em>' + w + '</em>') : w;
+        }
+        function emitRun(text, inEm) {
+          // Split on spaces; emit a word, then a real space, then next word, etc.
+          var tokens = text.split(/(\s+)/);
+          var r = '';
+          tokens.forEach(function (tok) {
+            if (!tok) return;
+            if (/^\s+$/.test(tok)) {
+              r += ' '; // normal space between words — safe break point
+            } else {
+              r += emitWord(tok, inEm);
+            }
+          });
+          return r;
+        }
         parts.forEach(function (part) {
           if (/^<em>/.test(part)) {
             var inner = part.replace(/<\/?em>/g, '');
-            out += '<em>';
-            inner.split('').forEach(function (ch) {
-              out += '<span class="sc-letter" style="transition-delay:' + (idx * 22) + 'ms">' + (ch === ' ' ? '&nbsp;' : ch) + '</span>';
-              idx++;
-            });
-            out += '</em>';
+            out += emitRun(inner, true);
           } else {
-            part.split('').forEach(function (ch) {
-              out += '<span class="sc-letter" style="transition-delay:' + (idx * 22) + 'ms">' + (ch === ' ' ? '&nbsp;' : ch) + '</span>';
-              idx++;
-            });
+            out += emitRun(part, false);
           }
         });
         h.innerHTML = out;
